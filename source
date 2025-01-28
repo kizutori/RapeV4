@@ -1,0 +1,297 @@
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Library.CreateLib("Kyo Hub", "DarkTheme")
+
+-- Main Tab and Section
+local Main = Window:NewTab("Main")
+local MainSection = Main:NewSection("Main")
+
+-- Malicious Tab and Section
+local Malicious = Window:NewTab("Malicious")
+local MaliciousSection = Malicious:NewSection("Config")
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+-- Variables
+local tracingEnabled = false
+local strafeEnabled = false
+local targetPlayer = nil
+local radius = 15 -- Default radius for strafing
+local strafeSpeed = 1
+local yOffset = 0 -- Vertical offset for strafing
+local FOV_RADIUS = 100 -- Adjustable FOV Radius
+local angle = 0
+local strafeConnection
+local aimbotConnection
+
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Visible = false
+FOVCircle.Thickness = 2
+FOVCircle.Radius = FOV_RADIUS
+FOVCircle.Filled = false
+FOVCircle.Transparency = 1
+
+-- ESP Variables
+local playerHighlights = {}
+local playerNametags = {}
+local espEnabled = false
+
+-- Utility Functions
+local function sendNotification(title, text)
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = title;
+        Text = text;
+    })
+end
+
+local function updateFOVCircle()
+    local mousePosition = UserInputService:GetMouseLocation()
+    FOVCircle.Position = Vector2.new(mousePosition.X, mousePosition.Y)
+    FOVCircle.Radius = FOV_RADIUS
+end
+
+local function findPlayerClosestToCrosshair()
+    local shortestDistance = math.huge
+    local nearestPlayer = nil
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local screenPoint, onScreen = Camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
+            if onScreen then
+                local mousePosition = UserInputService:GetMouseLocation()
+                local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - mousePosition).Magnitude
+                if distance < FOV_RADIUS and distance < shortestDistance then
+                    shortestDistance = distance
+                    nearestPlayer = player
+                end
+            end
+        end
+    end
+
+    return nearestPlayer
+end
+
+-- Aimbot Functionality
+local function startAimbot()
+    aimbotConnection = RunService.RenderStepped:Connect(function()
+        if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local targetRootPart = targetPlayer.Character.HumanoidRootPart
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetRootPart.Position)
+        end
+    end)
+end
+
+local function stopAimbot()
+    if aimbotConnection then
+        aimbotConnection:Disconnect()
+        aimbotConnection = nil
+    end
+end
+
+-- Strafing Functionality with Vertical Strafe
+local function startStrafing()
+    if strafeConnection then return end -- Prevent multiple connections
+
+    strafeConnection = RunService.RenderStepped:Connect(function()
+        if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local targetRootPart = targetPlayer.Character.HumanoidRootPart
+            angle = angle + strafeSpeed
+
+            local xOffset = math.sin(angle) * radius
+            local zOffset = math.cos(angle) * radius
+
+            -- Adjust the Y offset based on the vertical strafe slider
+            local finalYOffset = yOffset
+
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local playerRootPart = LocalPlayer.Character.HumanoidRootPart
+                playerRootPart.CFrame = targetRootPart.CFrame * CFrame.new(xOffset, finalYOffset, zOffset)
+            end
+        end
+    end)
+end
+
+local function stopStrafing()
+    if strafeConnection then
+        strafeConnection:Disconnect()
+        strafeConnection = nil
+    end
+end
+
+-- UI Toggles and Sliders
+MainSection:NewToggle("Aimbot", "Enables aimbot to lock onto players", function(state)
+    tracingEnabled = state
+
+    if not tracingEnabled then
+        sendNotification("Aimbot Disabled", "Aimbot is turned off.")
+        targetPlayer = nil
+        stopAimbot()
+        stopStrafing()
+    else
+        sendNotification("Aimbot Enabled", "Press 'Q' to lock onto a player.")
+    end
+end)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+
+    if input.KeyCode == Enum.KeyCode.Q and tracingEnabled then
+        if targetPlayer then
+            sendNotification("Lock Off", "Unlocked from " .. targetPlayer.Name)
+            targetPlayer = nil
+            stopAimbot()
+            stopStrafing()
+        else
+            targetPlayer = findPlayerClosestToCrosshair()
+            if targetPlayer then
+                sendNotification("Lock On", "Locked onto " .. targetPlayer.Name)
+                startAimbot()
+                if strafeEnabled then
+                    startStrafing()
+                end
+            else
+                sendNotification("Aimbot Error", "No target found.")
+            end
+        end
+    end
+end)
+
+MainSection:NewToggle("FOV", "Shows FOV", function(state)
+    FOVCircle.Visible = state
+end)
+
+MainSection:NewSlider("FOV Size", "Adjust the FOV size", 500, 0, function(s)
+    FOV_RADIUS = s
+end)
+
+MaliciousSection:NewToggle("Strafe", "Strafes around a locked-on player", function(state)
+    strafeEnabled = state
+
+    if strafeEnabled then
+        startStrafing()
+    else
+        stopStrafing()
+    end
+end)
+
+MaliciousSection:NewSlider("X-Axis", "Adjust the strafe distance", 30, 5, function(s) 
+    radius = s  -- Set the strafe radius to the slider value
+end)
+
+MaliciousSection:NewSlider("Y-Axis", "Adjust the height distance", 20, -5, function(s) 
+    yOffset = s  -- Set the vertical offset to the slider value
+end)
+
+RunService.RenderStepped:Connect(function()
+    updateFOVCircle()
+end)
+
+-- ESP Functions
+local function applyHighlight(player)
+    local function onCharacterAdded(character)
+        if character:FindFirstChildOfClass("Highlight") then return end
+        
+        local highlight = Instance.new("Highlight", character)
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        highlight.FillTransparency = 0.5
+        highlight.OutlineTransparency = 0
+        highlight.FillColor = Color3.fromRGB(255, 255, 255)
+        highlight.OutlineColor = Color3.fromRGB(0, 0, 0)
+        playerHighlights[player] = highlight
+    end
+
+    if player.Character then
+        onCharacterAdded(player.Character)
+    end
+    player.CharacterAdded:Connect(onCharacterAdded)
+end
+
+local function removeHighlights()
+    for _, highlight in pairs(playerHighlights) do
+        highlight:Destroy()
+    end
+    playerHighlights = {}
+end
+
+local function applyNametag(player)
+    local function onCharacterAdded(character)
+        if playerNametags[player] then return end
+        
+        local billboard = Instance.new("BillboardGui", character)
+        billboard.Size = UDim2.new(0, 200, 0, 50)
+        billboard.StudsOffset = Vector3.new(0, 3, 0)
+        billboard.Adornee = character:WaitForChild("Head")
+        
+        local textLabel = Instance.new("TextLabel", billboard)
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.Text = player.Name
+        textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextSize = 18
+        textLabel.TextStrokeTransparency = 0.5
+        textLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+        textLabel.Font = Enum.Font.SourceSansBold
+        
+        playerNametags[player] = billboard
+    end
+
+    if player.Character then
+        onCharacterAdded(player.Character)
+    end
+    player.CharacterAdded:Connect(onCharacterAdded)
+end
+
+local function removeNametags()
+    for _, billboard in pairs(playerNametags) do
+        billboard:Destroy()
+    end
+    playerNametags = {}
+end
+
+-- ESP Event Listeners
+Players.PlayerAdded:Connect(function(player)
+    if espEnabled then
+        applyHighlight(player)
+        applyNametag(player)
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if not espEnabled then return end
+    for player, highlight in pairs(playerHighlights) do
+        highlight.FillColor = Color3.fromRGB(255, 255, 255)
+        highlight.OutlineColor = Color3.fromRGB(0, 0, 0)
+    end
+    for player, billboard in pairs(playerNametags) do
+        local textLabel = billboard:FindFirstChild("TextLabel")
+        if textLabel then
+            textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            textLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+        end
+    end
+end)
+
+-- Visual Tab
+local Visual = Window:NewTab("Visual")
+local VisualSection = Visual:NewSection("ESP")
+
+VisualSection:NewToggle("Highlight & Nametag", "Shows players", function(state)
+    espEnabled = state
+    if state then
+        sendNotification("Highlight & Nametag", "ESP Activated")
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                applyHighlight(player)
+                applyNametag(player)
+            end
+        end
+    else
+        sendNotification("Highlight & Nametag", "ESP Deactivated")
+        removeHighlights()
+        removeNametags()
+    end
+end)
