@@ -6,7 +6,7 @@ KYO = {
         ["Keybind"] = "c",
 
         ["UseShake"] = false,
-        ["ShakeValue"] = 10,
+        ["ShakeValue"] = 1,  -- Initial shake value set to 1
 
         ["UseSmoothing"] = false,
         ["SmoothingAmount"] = 0.02,
@@ -121,7 +121,7 @@ local NotifyLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com
 local Notify = NotifyLibrary.Notify
 makefolder("Example")
 
-local Window = library:new({name = "KYO", accent = Color3.fromRGB(175, 252, 149), textsize = 13})
+local Window = library:new({name = "KYOWARE", accent = Color3.fromRGB(175, 252, 149), textsize = 13})  -- Changed title to KYOWARE
 local Legit = Window:page({name = "Legit"})
 
 local Camlock = Legit:section({name = "Aim Assist", side = "left", size = 445})
@@ -384,7 +384,7 @@ Camlock:slider({name = "Smoothing Amount", def = 0.02, max = 1, min = 0.001, rou
     KYO.Cam.SmoothingAmount = Value
 end})
 
-Camlock:slider({name = "Shake Value", def = 10, max = 10, min = 1, rounding = false, callback = function(Value)
+Camlock:slider({name = "Shake Value", def = 1, max = 10, min = 1, rounding = false, callback = function(Value)
     KYO.Cam.ShakeValue = Value
 end})
 
@@ -452,9 +452,25 @@ UIKeybindSection:dropdown({
     end
 })
 
+-- Variable to track UI visibility
+local uiVisible = true
+
+-- Function to toggle UI visibility
+local function toggleUI()
+    uiVisible = not uiVisible
+    Window:set_visible(uiVisible)
+end
+
+-- Connect the keybind to toggle the UI
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == toggleUIKey then
+        toggleUI()
+    end
+end)
+
 function Notify(Text)
     game.StarterGui:SetCore("SendNotification", {
-        Title = "KYO",
+        Title = "KYOWARE",
         Text = Text,
         Duration = KYO.Both.Duration,
     })
@@ -502,6 +518,22 @@ task.spawn(function()
                     local shakeY = math.random(-KYO.Cam.ShakeValue, KYO.Cam.ShakeValue)
                     local shakeZ = math.random(-KYO.Cam.ShakeValue, KYO.Cam.ShakeValue)
                     Camera.CFrame = Camera.CFrame * CFrame.Angles(math.rad(shakeX), math.rad(shakeY), math.rad(shakeZ))
+                end
+
+                -- Check if target is dead
+                if KYO.Cam.UnlockOnTargetDeath and MrChosenOne.Character.Humanoid.Health <= 0 then
+                    CamKeybind = false
+                    if KYO.Both.Notifications then
+                        Notify("Target Died, Unlocked")
+                    end
+                end
+
+                -- Check if local player is dead
+                if KYO.Cam.UnlockOnOwnDeath and LocalPlayer.Character.Humanoid.Health <= 0 then
+                    CamKeybind = false
+                    if KYO.Both.Notifications then
+                        Notify("You Died, Unlocked")
+                    end
                 end
             end
         end
@@ -841,4 +873,21 @@ OldIndex = hookmetamethod(game, "__index", function(self, Index)
         end
     end
     return OldIndex(self, Index)
+end)
+
+-- Detect player death and reset aim assist
+LocalPlayer.CharacterAdded:Connect(function(character)
+    character:WaitForChild("Humanoid").Died:Connect(function()
+        if KYO.Cam.UnlockOnOwnDeath then
+            CamKeybind = false
+            if KYO.Both.Notifications then
+                Notify("You Died, Aim Assist Disabled")
+            end
+        end
+        if KYO.Target.Enabled then
+            TargetKeybind = false
+            stopAimbot()
+            stopStrafing()
+        end
+    end)
 end)
