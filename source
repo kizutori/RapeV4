@@ -37,13 +37,14 @@ KYO = {
         ["FriendCheck"] = false,
         ["CrewCheck"] = false,
         ["TeamCheck"] = false,
+        ["KOCheck"] = false,
     },
     Target = {
         ["Enabled"] = false,
         ["Keybind"] = "c",
         ["Prediction"] = 0.138,
         ["Part"] = "HumanoidRootPart",
-        ["UsePrediction"] = true,
+        ["UsePrediction"] = false,
 
         ["Resolver"] = false,
         ["ResolverTune"] = 0.138,
@@ -297,6 +298,9 @@ end})
 
 AimbotSection:toggle({name = "Prediction", def = false, callback = function(Boolean)
     KYO.Target.UsePrediction = Boolean
+    if not Boolean then
+        KYO.Target.Prediction = 0
+    end
 end})
 
 AimbotSection:slider({name = "Prediction", def = 0.3, max = 0.4, min = 0.01, rounding = false, callback = function(Value)
@@ -416,6 +420,10 @@ Checks:toggle({name = "Team Check", def = false, callback = function(Boolean)
     KYO.Both.TeamCheck = Boolean
 end})
 
+Checks:toggle({name = "KO Check", def = false, callback = function(Boolean)
+    KYO.Both.KOCheck = Boolean
+end})
+
 local Settings = Window:page({name = "Settings"})
 local ConfigSection = Settings:section({name = "Config", side = "left", size = 250})
 local ConfigLoader = ConfigSection:configloader({folder = "Example"})
@@ -477,8 +485,10 @@ task.spawn(function()
                 end
                 
                 if KYO.Cam.UseShake then
-                    local shakeAmount = math.random(-KYO.Cam.ShakeValue, KYO.Cam.ShakeValue) * KYO.Cam.ShakeMultiplier
-                    Camera.CFrame = Camera.CFrame * CFrame.Angles(0, math.rad(shakeAmount), 0)
+                    local shakeX = math.random(-KYO.Cam.ShakeValue, KYO.Cam.ShakeValue) * KYO.Cam.ShakeMultiplier
+                    local shakeY = math.random(-KYO.Cam.ShakeValue, KYO.Cam.ShakeValue) * KYO.Cam.ShakeMultiplier
+                    local shakeZ = math.random(-KYO.Cam.ShakeValue, KYO.Cam.ShakeValue) * KYO.Cam.ShakeMultiplier
+                    Camera.CFrame = Camera.CFrame * CFrame.Angles(math.rad(shakeX), math.rad(shakeY), math.rad(shakeZ))
                 end
             end
         end
