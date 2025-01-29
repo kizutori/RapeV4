@@ -143,6 +143,7 @@ local espNametagEnabled = false
 -- Highlight Function
 local function applyHighlight(player)
     local function onCharacterAdded(character)
+        if not espHighlightEnabled then return end -- Prevent adding highlights if ESP is off
         if character:FindFirstChildOfClass("Highlight") then return end
         
         local highlight = Instance.new("Highlight", character)
@@ -170,6 +171,7 @@ end
 -- Nametag Function
 local function applyNametag(player)
     local function onCharacterAdded(character)
+        if not espNametagEnabled then return end -- Prevent adding nametags if ESP is off
         if playerNametags[player] then return end
         
         local billboard = Instance.new("BillboardGui", character)
@@ -437,19 +439,18 @@ end})
 
 local Settings = Window:page({name = "Settings"})
 local ConfigSection = Settings:section({name = "Config", side = "left", size = 250})
-local UIKeybindSection = Settings:section({name = "UI Keybind", side = "right", size = 100})  -- Added UI Keybind section
+local UIKeybindSection = Settings:section({name = "UI Keybind", side = "right", size = 150})  -- Added UI Keybind section
 local ConfigLoader = ConfigSection:configloader({folder = "Example"})
 
--- Toggle UI Key
-local toggleUIKey = Enum.KeyCode.RightControl
-local uiVisible = true
-
-UserInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == toggleUIKey then
-        uiVisible = not uiVisible
-        Window:set_visible(uiVisible)
+UIKeybindSection:dropdown({
+    name = "Key",
+    def = "RightControl",
+    max = 7,
+    options = {"RightControl", "LeftControl", "LeftAlt", "RightAlt", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"},
+    callback = function(key)
+        toggleUIKey = Enum.KeyCode[key]
     end
-end)
+})
 
 function Notify(Text)
     game.StarterGui:SetCore("SendNotification", {
@@ -463,7 +464,7 @@ Mouse.KeyDown:Connect(function(ChosenKey)
     if ChosenKey == KYO.Cam.Keybind and KYO.Cam.Enabled then
         if CamKeybind == false then
             CamKeybind = true
-            MrChosenOne = FindClosestPlayer()
+            MrChosenOne = FindClosestPlayer(KYO.Cam.FieldOfView.Radius * 3)
             if KYO.Both.Notifications then
                 Notify("Locked Onto " .. MrChosenOne.DisplayName)
             end
@@ -511,7 +512,7 @@ Mouse.KeyDown:Connect(function(ChosenKey)
     if ChosenKey == KYO.Target.Keybind and KYO.Target.Enabled then
         if TargetKeybind == false then
             TargetKeybind = true
-            hojixvChosenPlayer = FindClosestPlayer()
+            hojixvChosenPlayer = FindClosestPlayer(KYO.Target.FieldOfView.Radius * 3)
             if KYO.Target.Notify then
                 Notify("Locked Onto " .. hojixvChosenPlayer.DisplayName)
             end
@@ -692,7 +693,7 @@ local function pointOnCircle(angle)
     return Vector3.new(x, 0, z)
 end
 
-function FindClosestPlayer()
+function FindClosestPlayer(fovRadius)
     local localPlayer = game.Players.LocalPlayer
     local shortestDistance = math.huge
     local nearestPlayer = nil
@@ -703,7 +704,7 @@ function FindClosestPlayer()
             local otherPlayerPosition = otherPlayer.Character.HumanoidRootPart.Position
             local pos = game:GetService("Workspace").CurrentCamera:WorldToViewportPoint(otherPlayerPosition)
             local distance = (Vector2.new(pos.X, pos.Y) - localMouse).Magnitude
-            if distance < shortestDistance and distance <= TargetCircleFOV.Radius then
+            if distance < shortestDistance and distance <= fovRadius then
                 -- Calculate the angle between the camera's forward direction and the direction to the target
                 local cameraLookVector = game:GetService("Workspace").CurrentCamera.CFrame.LookVector
                 local directionToTarget = (otherPlayerPosition - game:GetService("Workspace").CurrentCamera.CFrame.p).unit
@@ -804,7 +805,7 @@ end)
 local OldIndex = nil
 OldIndex = hookmetamethod(game, "__index", function(self, Index)
     if not checkcaller() and Mouse and self == Mouse and Index == "Hit" and KYO.Target.Enabled then
-        local hojixvz = FindClosestPlayer()
+        local hojixvz = FindClosestPlayer(KYO.Target.FieldOfView.Radius * 3)
         if hojixvz and hojixvz[KYO.Target.Part] then
             local Formula = nil
             local Position = nil
