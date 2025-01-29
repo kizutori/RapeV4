@@ -440,7 +440,36 @@ end})
 local Settings = Window:page({name = "Settings"})
 local ConfigSection = Settings:section({name = "Config", side = "left", size = 250})
 local UIKeybindSection = Settings:section({name = "UI Keybind", side = "right", size = 150})  -- Added UI Keybind section
-local ConfigLoader = ConfigSection:configloader({folder = "Example"})
+local ConfigLoader = ConfigSection:configloader({
+    folder = "Example",
+    loadcallback = function(name)
+        -- Load the configuration
+        local success, data = pcall(function()
+            return game:GetService("HttpService"):JSONDecode(readfile("Example/" .. name .. ".json"))
+        end)
+        if success and data then
+            for k, v in pairs(data) do
+                if KYO[k] then
+                    for key, value in pairs(v) do
+                        KYO[k][key] = value
+                    end
+                end
+            end
+        end
+    end,
+    savecallback = function(name)
+        -- Save the configuration
+        local data = {}
+        for k, v in pairs(KYO) do
+            data[k] = v
+        end
+        writefile("Example/" .. name .. ".json", game:GetService("HttpService"):JSONEncode(data))
+    end,
+    deletecallback = function(name)
+        -- Delete the configuration
+        delfile("Example/" .. name .. ".json")
+    end
+})
 
 UIKeybindSection:dropdown({
     name = "Key",
@@ -458,12 +487,12 @@ local uiVisible = true
 -- Function to toggle UI visibility
 local function toggleUI()
     uiVisible = not uiVisible
-    Window:set_visible(uiVisible)
+    Window:toggle(uiVisible)
 end
 
 -- Connect the keybind to toggle the UI
-UserInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == toggleUIKey then
+UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+    if not gameProcessedEvent and input.KeyCode == toggleUIKey then
         toggleUI()
     end
 end)
@@ -891,3 +920,13 @@ LocalPlayer.CharacterAdded:Connect(function(character)
         end
     end)
 end)
+
+-- Function to initialize configurations
+function initializeConfig()
+    if not isfolder("Example") then
+        makefolder("Example")
+    end
+end
+
+-- Initialize configurations on load
+initializeConfig()
