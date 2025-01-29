@@ -4,34 +4,29 @@ KYO = {
         ["Prediction"] = 0.13,
         ["Part"] = "Head",
         ["Keybind"] = "c",
-
         ["UseShake"] = false,
-        ["ShakeValue"] = 1,  -- Initial shake value set to 1
-
+        ["ShakeValue"] = 1,
         ["UseSmoothing"] = false,
         ["SmoothingAmount"] = 0.02,
         ["EasingStyle"] = Enum.EasingStyle.Linear,
         ["EasingDirection"] = Enum.EasingDirection.In,
-
         ["Resolver"] = false,
         ["ResolverTune"] = 0.13,
-
         ["UnlockOnTargetDeath"] = false,
         ["UnlockOnOwnDeath"] = false,
-
         FieldOfView = {
             ["Visible"] = false,
             ["Filled"] = false,
             ["Color"] = Color3.fromRGB(255, 255, 144),
             ["Transparency"] = 1,
             ["Radius"] = 30,
-            ["Angle"] = 90, -- Field of view angle in degrees
+            ["Angle"] = 90,
         },
+        ["Distance"] = 100,
     },
     Both = {
         ["Notifications"] = false,
         ["Duration"] = 3,
-
         ["VisibleCheck"] = false,
         ["FriendCheck"] = false,
         ["CrewCheck"] = false,
@@ -44,24 +39,19 @@ KYO = {
         ["Prediction"] = 0.138,
         ["Part"] = "HumanoidRootPart",
         ["UsePrediction"] = false,
-
         ["Resolver"] = false,
         ["ResolverTune"] = 0.138,
-
         ["StrafeEnabled"] = false,
         ["StrafeRadius"] = 10,
         ["StrafeSpeed"] = 5,
         ["StrafeHeight"] = 0,
-
         ["Notify"] = false,
-
         Drawings = {
             ["Tracer"] = false,
             ["Color"] = Color3.fromRGB(255, 255, 255),
             ["Thickness"] = 1,
             ["Transparency"] = 1,
         },
-
         FieldOfView = {
             ["Visible"] = false,
             ["Filled"] = false,
@@ -69,6 +59,7 @@ KYO = {
             ["Transparency"] = 1,
             ["Radius"] = 30,
         },
+        ["Distance"] = 100,
     },
     Macro = {
         ["Enabled"] = false,
@@ -113,7 +104,6 @@ TargetCircleFOV.Filled = KYO.Target.FieldOfView.Filled
 game:GetService("RunService").Heartbeat:Connect(function()
     CamCircleFOV.Position = Vector2.new(Mouse.X, Mouse.Y + 35)
     TargetCircleFOV.Position = Vector2.new(Mouse.X, Mouse.Y + 35)
-    task.wait()
 end)
 
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/imagoodpersond/puppyware/main/lib"))()
@@ -121,12 +111,11 @@ local NotifyLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com
 local Notify = NotifyLibrary.Notify
 makefolder("Example")
 
-local Window = library:new({name = "KYOWARE", accent = Color3.fromRGB(175, 252, 149), textsize = 13})  -- Changed title to KYOWARE
+local Window = library:new({name = "KYOWARE", accent = Color3.fromRGB(175, 252, 149), textsize = 13})
 local Legit = Window:page({name = "Legit"})
-
 local Camlock = Legit:section({name = "Aim Assist", side = "left", size = 445})
-local Checks = Legit:section({name = "Checks", side = "right", size = 140})  -- Adjusted size to fit KO Check
-local Macro = Legit:section({name = "Macro", side = "right", size = 150})  -- Adjusted size to fit content
+local Checks = Legit:section({name = "Checks", side = "right", size = 140})
+local Macro = Legit:section({name = "Macro", side = "right", size = 150})
 
 local Rage = Window:page({name = "Rage"})
 local AimbotSection = Rage:section({name = "Aimbot", side = "left", size = 300})
@@ -134,7 +123,6 @@ local OrbitSection = Rage:section({name = "Orbit", side = "right", size = 200})
 local CFrameSection = Rage:section({name = "CFrame", side = "left", size = 80})
 local ESPSection = Rage:section({name = "ESP", side = "right", size = 130})
 
--- Variables for ESP
 local playerHighlights = {}
 local playerNametags = {}
 local espHighlightEnabled = false
@@ -143,7 +131,7 @@ local espNametagEnabled = false
 -- Highlight Function
 local function applyHighlight(player)
     local function onCharacterAdded(character)
-        if not espHighlightEnabled then return end -- Prevent adding highlights if ESP is off
+        if not espHighlightEnabled then return end
         if character:FindFirstChildOfClass("Highlight") then return end
         
         local highlight = Instance.new("Highlight", character)
@@ -171,12 +159,13 @@ end
 -- Nametag Function
 local function applyNametag(player)
     local function onCharacterAdded(character)
-        if not espNametagEnabled then return end -- Prevent adding nametags if ESP is off
+        if not espNametagEnabled then return end
         if playerNametags[player] then return end
         
         local billboard = Instance.new("BillboardGui", character)
         billboard.Size = UDim2.new(0, 200, 0, 50)
         billboard.StudsOffset = Vector3.new(0, 3, 0)
+        billboard.AlwaysOnTop = true
         billboard.Adornee = character:WaitForChild("Head")
         
         local textLabel = Instance.new("TextLabel", billboard)
@@ -335,6 +324,10 @@ AimbotSection:slider({name = "FOV Radius", def = 30, max = 250, min = 1, roundin
     TargetCircleFOV.Radius = Value * 3
 end})
 
+AimbotSection:slider({name = "Distance", def = 100, max = 100, min = 0, rounding = false, callback = function(Value)
+    KYO.Target.Distance = Value
+end})
+
 OrbitSection:toggle({name = "Toggle Orbit", def = false, callback = function(Boolean)
     KYO.Target.StrafeEnabled = Boolean
     if KYO.Target.Enabled and Boolean then
@@ -397,6 +390,10 @@ Camlock:slider({name = "FOV Radius", def = 20, max = 250, min = 1, rounding = fa
     CamCircleFOV.Radius = Value * 3
 end})
 
+Camlock:slider({name = "Distance", def = 100, max = 100, min = 0, rounding = false, callback = function(Value)
+    KYO.Cam.Distance = Value
+end})
+
 Camlock:toggle({name = "Resolver", def = false, callback = function(Boolean)
     KYO.Cam.Resolver = Boolean
 end})
@@ -439,11 +436,10 @@ end})
 
 local Settings = Window:page({name = "Settings"})
 local ConfigSection = Settings:section({name = "Config", side = "left", size = 250})
-local UIKeybindSection = Settings:section({name = "UI Keybind", side = "right", size = 150})  -- Added UI Keybind section
+local UIKeybindSection = Settings:section({name = "UI Keybind", side = "right", size = 150})
 local ConfigLoader = ConfigSection:configloader({
     folder = "Example",
     loadcallback = function(name)
-        -- Load the configuration
         local success, data = pcall(function()
             return game:GetService("HttpService"):JSONDecode(readfile("Example/" .. name .. ".json"))
         end)
@@ -458,7 +454,6 @@ local ConfigLoader = ConfigSection:configloader({
         end
     end,
     savecallback = function(name)
-        -- Save the configuration
         local data = {}
         for k, v in pairs(KYO) do
             data[k] = v
@@ -466,7 +461,6 @@ local ConfigLoader = ConfigSection:configloader({
         writefile("Example/" .. name .. ".json", game:GetService("HttpService"):JSONEncode(data))
     end,
     deletecallback = function(name)
-        -- Delete the configuration
         delfile("Example/" .. name .. ".json")
     end
 })
@@ -497,6 +491,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     end
 end)
 
+-- Notify function
 function Notify(Text)
     game.StarterGui:SetCore("SendNotification", {
         Title = "KYOWARE",
@@ -505,73 +500,25 @@ function Notify(Text)
     })
 end
 
+-- Keybind handling for Aim Assist, Aimbot, and Macro
 Mouse.KeyDown:Connect(function(ChosenKey)
     if ChosenKey == KYO.Cam.Keybind and KYO.Cam.Enabled then
-        if CamKeybind == false then
+        if not CamKeybind then
             CamKeybind = true
             MrChosenOne = FindClosestPlayer(KYO.Cam.FieldOfView.Radius * 3)
             if KYO.Both.Notifications then
                 Notify("Locked Onto " .. MrChosenOne.DisplayName)
             end
-        elseif CamKeybind == true then
+        else
             CamKeybind = false
             if KYO.Both.Notifications then
                 Notify("No Longer Locked On")
             end
         end
     end
-end)
 
-task.spawn(function()
-    while true do
-        task.wait()
-        if CamKeybind then
-            if MrChosenOne and MrChosenOne.Parent then
-                local Opp = MrChosenOne.Character[KYO.Cam.Part].Position + MrChosenOne.Character[KYO.Cam.Part].Velocity * KYO.Cam.Prediction
-                
-                if KYO.Cam.UseSmoothing then
-                    local TweenService = game:GetService("TweenService")
-                    local tweenInfo = TweenInfo.new(
-                        KYO.Cam.SmoothingAmount,
-                        KYO.Cam.EasingStyle,
-                        KYO.Cam.EasingDirection
-                    )
-                    local tween = TweenService:Create(Camera, tweenInfo, {CFrame = CFrame.new(Camera.CFrame.p, Opp)})
-                    tween:Play()
-                else
-                    Camera.CFrame = CFrame.new(Camera.CFrame.p, Opp)
-                end
-                
-                if KYO.Cam.UseShake then
-                    local shakeX = math.random(-KYO.Cam.ShakeValue, KYO.Cam.ShakeValue)
-                    local shakeY = math.random(-KYO.Cam.ShakeValue, KYO.Cam.ShakeValue)
-                    local shakeZ = math.random(-KYO.Cam.ShakeValue, KYO.Cam.ShakeValue)
-                    Camera.CFrame = Camera.CFrame * CFrame.Angles(math.rad(shakeX), math.rad(shakeY), math.rad(shakeZ))
-                end
-
-                -- Check if target is dead
-                if KYO.Cam.UnlockOnTargetDeath and MrChosenOne.Character.Humanoid.Health <= 0 then
-                    CamKeybind = false
-                    if KYO.Both.Notifications then
-                        Notify("Target Died, Unlocked")
-                    end
-                end
-
-                -- Check if local player is dead
-                if KYO.Cam.UnlockOnOwnDeath and LocalPlayer.Character.Humanoid.Health <= 0 then
-                    CamKeybind = false
-                    if KYO.Both.Notifications then
-                        Notify("You Died, Unlocked")
-                    end
-                end
-            end
-        end
-    end
-end)
-
-Mouse.KeyDown:Connect(function(ChosenKey)
     if ChosenKey == KYO.Target.Keybind and KYO.Target.Enabled then
-        if TargetKeybind == false then
+        if not TargetKeybind then
             TargetKeybind = true
             hojixvChosenPlayer = FindClosestPlayer(KYO.Target.FieldOfView.Radius * 3)
             if KYO.Target.Notify then
@@ -581,7 +528,7 @@ Mouse.KeyDown:Connect(function(ChosenKey)
             if KYO.Target.StrafeEnabled then
                 startStrafing()
             end
-        elseif TargetKeybind == true then
+        else
             TargetKeybind = false
             if KYO.Target.Notify then
                 Notify("No Longer Locked On")
@@ -590,31 +537,23 @@ Mouse.KeyDown:Connect(function(ChosenKey)
             stopStrafing()
         end
     end
-end)
 
-Mouse.KeyDown:Connect(function(ChosenKey)
     if ChosenKey == KYO.Macro.Keybind and KYO.Macro.Enabled then
-        if MacroKeybind == false then
+        if not MacroKeybind then
             MacroKeybind = true
+            Notify("Macro Enabled")
             startMacro()
-        elseif MacroKeybind == true then
+        else
             MacroKeybind = false
+            Notify("Macro Disabled")
             stopMacro()
         end
     end
 end)
 
+-- Function to start the macro
 function startMacro()
     if game.PlaceId == 2788229376 then
-        if getgenv().L_15 == true then
-            game.StarterGui:SetCore("SendNotification", {
-                Title = "Speed Glitch",
-                Text = "Already Executed",
-            })
-            return
-        end
-        getgenv().L_15 = true -- don't change me
-        
         getgenv().Notification = true
         getgenv().AutoMacro = true
         getgenv().Macro = true
@@ -625,108 +564,95 @@ function startMacro()
         getgenv().GodMacroKey = KYO.Macro.Keybind
         getgenv().GodMacroAuto = true
 
-        game:GetService("UserInputService").InputBegan:Connect(function(input, chatting)
-            if input.UserInputType == Enum.UserInputType.Keyboard then
-                if chatting then
-                    IsChatting = true
-                else
-                    IsChatting = false
-                end
-                if input.KeyCode == KYO.Macro.Keybind then
-                    if IsChatting ~= false then
-                        return
+        if not getgenv().MacroConnection then
+            getgenv().MacroConnection = game:GetService("UserInputService").InputBegan:Connect(function(input, chatting)
+                if input.UserInputType == Enum.UserInputType.Keyboard then
+                    if chatting then
+                        IsChatting = true
+                    else
+                        IsChatting = false
                     end
-                    if not AutoMacroToggle then
-                        if Notification == true then
-                            game.StarterGui:SetCore("SendNotification", {
-                                Title = "AutoMacro",
-                                Text = "Activated",
-                            })
-                        end
-                        AutoMacroToggle = true
-                        Instance.new("Animation", game:GetService("ReplicatedStorage"):findFirstChild("ClientAnimations")).Name = 'Greet'
-                        game:GetService("ReplicatedStorage"):findFirstChild("ClientAnimations"):findFirstChild("Greet").AnimationId = 'rbxassetid://3189777795'
-                        local Greet = game.ReplicatedStorage.ClientAnimations.Greet
-                        local Humanoid = game.Players.LocalPlayer.Character.Humanoid
-                        local Animation = Humanoid:LoadAnimation(Greet)
-                        Animation:Play()
-                        wait(1.6)
-                        for i, v in next, game:GetService("Players").LocalPlayer.Backpack:GetChildren() do
-                            if v:IsA("Tool") and v.Name ~= "Combat" or v.Name ~= "[Boombox]" then
-                                game:GetService("Players").LocalPlayer.Character:findFirstChildOfClass'Humanoid':EquipTool(v)
-                            end
-                        end
-                        wait()
-                        game:GetService("VirtualInputManager"):SendKeyEvent(true, "S", false, game)
-                        spawn(function()
-                            if MacroMode == "Keyboard" then
-                                while AutoMacroToggle == true do
-                                    wait()
-                                    game:GetService("VirtualInputManager"):SendKeyEvent(true, "I", false, game)
-                                    wait()
-                                    game:GetService("VirtualInputManager"):SendKeyEvent(true, "O", false, game)
-                                    wait()
-                                    game:GetService("VirtualInputManager"):SendKeyEvent(true, "I", false, game)
-                                    wait()
-                                    game:GetService("VirtualInputManager"):SendKeyEvent(true, "O", false, game)
-                                    wait()
-                                    game:GetService("VirtualInputManager"):SendKeyEvent(true, "I", false, game)
-                                    wait()
-                                    game:GetService("VirtualInputManager"):SendKeyEvent(true, "O", false, game)
-                                    wait()
-                                    game:GetService("VirtualInputManager"):SendKeyEvent(true, "I", false, game)
-                                    wait()
-                                    game:GetService("VirtualInputManager"):SendKeyEvent(true, "O", false, game)
-                                    wait()
-                                end
-                            elseif MacroMode == "Mouse" then
-                                while AutoMacroToggle == true do
-                                    wait()
-                                    game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", true, game)
-                                    wait()
-                                    game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", false, game)
-                                    wait()
-                                    game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", true, game)
-                                    wait()
-                                    game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", false, game)
-                                    wait()
-                                    game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", true, game)
-                                    wait()
-                                    game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", false, game)
-                                    wait()
-                                    game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", true, game)
-                                    wait()
-                                    game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", false, game)
-                                    wait()
+                    if input.KeyCode == KYO.Macro.Keybind and not IsChatting then
+                        if not AutoMacroToggle then
+                            AutoMacroToggle = true
+                            Instance.new("Animation", game:GetService("ReplicatedStorage"):findFirstChild("ClientAnimations")).Name = 'Greet'
+                            game:GetService("ReplicatedStorage"):findFirstChild("ClientAnimations"):findFirstChild("Greet").AnimationId = 'rbxassetid://3189777795'
+                            local Greet = game.ReplicatedStorage.ClientAnimations.Greet
+                            local Humanoid = game.Players.LocalPlayer.Character.Humanoid
+                            local Animation = Humanoid:LoadAnimation(Greet)
+                            Animation:Play()
+                            wait(1.6)
+                            for i, v in next, game:GetService("Players").LocalPlayer.Backpack:GetChildren() do
+                                if v:IsA("Tool") and v.Name ~= "Combat" or v.Name ~= "[Boombox]" then
+                                    game:GetService("Players").LocalPlayer.Character:findFirstChildOfClass'Humanoid':EquipTool(v)
                                 end
                             end
-                        end)
-                        Animation:Stop()
-                        Macro =
-                            game:service'Players'.LocalPlayer.Character:findFirstChildOfClass'Humanoid'.Running:Connect(function()
+                            wait()
+                            game:GetService("VirtualInputManager"):SendKeyEvent(true, "S", false, game)
+                            spawn(function()
+                                if MacroMode == "Keyboard" then
+                                    while AutoMacroToggle do
+                                        wait()
+                                        game:GetService("VirtualInputManager"):SendKeyEvent(true, "I", false, game)
+                                        wait()
+                                        game:GetService("VirtualInputManager"):SendKeyEvent(true, "O", false, game)
+                                        wait()
+                                        game:GetService("VirtualInputManager"):SendKeyEvent(true, "I", false, game)
+                                        wait()
+                                        game:GetService("VirtualInputManager"):SendKeyEvent(true, "O", false, game)
+                                        wait()
+                                        game:GetService("VirtualInputManager"):SendKeyEvent(true, "I", false, game)
+                                        wait()
+                                        game:GetService("VirtualInputManager"):SendKeyEvent(true, "O", false, game)
+                                        wait()
+                                        game:GetService("VirtualInputManager"):SendKeyEvent(true, "I", false, game)
+                                        wait()
+                                        game:GetService("VirtualInputManager"):SendKeyEvent(true, "O", false, game)
+                                        wait()
+                                    end
+                                elseif MacroMode == "Mouse" then
+                                    while AutoMacroToggle do
+                                        wait()
+                                        game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", true, game)
+                                        wait()
+                                        game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", false, game)
+                                        wait()
+                                        game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", true, game)
+                                        wait()
+                                        game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", false, game)
+                                        wait()
+                                        game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", true, game)
+                                        wait()
+                                        game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", false, game)
+                                        wait()
+                                        game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", true, game)
+                                        wait()
+                                        game:GetService("VirtualInputManager"):SendMouseWheelEvent("0", "0", false, game)
+                                        wait()
+                                    end
+                                end
+                            end)
+                            Animation:Stop()
+                            Macro = game:service'Players'.LocalPlayer.Character:findFirstChildOfClass'Humanoid'.Running:Connect(function()
                                 Animation:Stop()
                             end)
-                    else
-                        if Notification == true then
-                            game.StarterGui:SetCore("SendNotification", {
-                                Title = "AutoMacro",
-                                Text = "Deactivated",
-                            })
+                        else
+                            AutoMacroToggle = false
+                            local Greet = game.ReplicatedStorage.ClientAnimations.Greet
+                            local Humanoid = game.Players.LocalPlayer.Character.Humanoid
+                            local Animation = Humanoid:LoadAnimation(Greet)
+                            Animation:Stop()
+                            game:GetService("ReplicatedStorage"):findFirstChild("ClientAnimations"):findFirstChild("Greet"):Remove()
+                            Macro:Disconnect()
                         end
-                        AutoMacroToggle = false
-                        local Greet = game.ReplicatedStorage.ClientAnimations.Greet
-                        local Humanoid = game.Players.LocalPlayer.Character.Humanoid
-                        local Animation = Humanoid:LoadAnimation(Greet)
-                        Animation:Stop()
-                        game:GetService("ReplicatedStorage"):findFirstChild("ClientAnimations"):findFirstChild("Greet"):Remove()
-                        Macro:Disconnect()
                     end
                 end
-            end
-        end)
+            end)
+        end
     end
 end
 
+-- Function to stop the macro
 function stopMacro()
     MacroKeybind = false
     if Notification == true then
@@ -735,25 +661,13 @@ function stopMacro()
             Text = "Deactivated",
         })
     end
-end
-
-Macro:toggle({name = "Enabled", def = false, callback = function(Boolean)
-    KYO.Macro.Enabled = Boolean
-    if not Boolean then
-        stopMacro()
+    AutoMacroToggle = false
+    if Macro then
+        Macro:Disconnect()
     end
-end})
-
-Macro:dropdown({name = "Key", def = "m", max = 7, options = {"c", "q", "x", "z", "t", "v", "g", "y", "m"}, callback = function(part)
-    KYO.Macro.Keybind = part
-end})
-
-local function pointOnCircle(angle)
-    local x = KYO.Target.StrafeRadius * math.cos(angle)
-    local z = KYO.Target.StrafeRadius * math.sin(angle)
-    return Vector3.new(x, 0, z)
 end
 
+-- Find closest player within FOV radius
 function FindClosestPlayer(fovRadius)
     local localPlayer = game.Players.LocalPlayer
     local shortestDistance = math.huge
@@ -766,13 +680,11 @@ function FindClosestPlayer(fovRadius)
             local pos = game:GetService("Workspace").CurrentCamera:WorldToViewportPoint(otherPlayerPosition)
             local distance = (Vector2.new(pos.X, pos.Y) - localMouse).Magnitude
             if distance < shortestDistance and distance <= fovRadius then
-                -- Calculate the angle between the camera's forward direction and the direction to the target
                 local cameraLookVector = game:GetService("Workspace").CurrentCamera.CFrame.LookVector
                 local directionToTarget = (otherPlayerPosition - game:GetService("Workspace").CurrentCamera.CFrame.p).unit
                 local angleToTarget = math.deg(math.acos(cameraLookVector:Dot(directionToTarget)))
-
-                -- Only consider players within the specified FOV angle
-                if angleToTarget <= KYO.Cam.FieldOfView.Angle then
+                local distanceToPlayer = (otherPlayer.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).magnitude
+                if angleToTarget <= KYO.Cam.FieldOfView.Angle and distanceToPlayer <= KYO.Cam.Distance then
                     shortestDistance = distance
                     nearestPlayer = otherPlayer
                 end
@@ -782,12 +694,16 @@ function FindClosestPlayer(fovRadius)
     return nearestPlayer
 end
 
+-- Aimbot functionality
 function startAimbot()
     aimbotConnection = RunService.RenderStepped:Connect(function()
         if hojixvChosenPlayer and hojixvChosenPlayer.Character and hojixvChosenPlayer.Character:FindFirstChild(KYO.Target.Part) then
             local targetPart = hojixvChosenPlayer.Character[KYO.Target.Part]
             local aimPosition = targetPart.Position + (targetPart.Velocity * KYO.Target.Prediction)
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, aimPosition)
+            local distanceToPlayer = (targetPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).magnitude
+            if distanceToPlayer <= KYO.Target.Distance then
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, aimPosition)
+            end
         end
     end)
 end
@@ -799,8 +715,9 @@ function stopAimbot()
     end
 end
 
+-- Strafing functionality
 function startStrafing()
-    if strafeConnection then return end -- Prevent multiple connections
+    if strafeConnection then return end
 
     strafeConnection = RunService.RenderStepped:Connect(function()
         if hojixvChosenPlayer and hojixvChosenPlayer.Character and hojixvChosenPlayer.Character:FindFirstChild("HumanoidRootPart") then
@@ -830,6 +747,7 @@ function stopStrafing()
     end
 end
 
+-- CFrame speed toggle
 game:GetService("RunService").Heartbeat:Connect(function()
     if cframespeedtoggle == true then
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame =
@@ -838,6 +756,7 @@ game:GetService("RunService").Heartbeat:Connect(function()
     end
 end)
 
+-- Spectate functionality
 game:GetService("RunService").Heartbeat:Connect(function()
     if TargetKeybind and KYO.Target.Spectate and hojixvChosenPlayer then
         game:GetService("Workspace").CurrentCamera.CameraSubject = hojixvChosenPlayer.Character.Humanoid
@@ -846,6 +765,7 @@ game:GetService("RunService").Heartbeat:Connect(function()
     end
 end)
 
+-- Hook metamethods for aim assist
 local hojixz = getrawmetamethod(game)
 local char = hojixz.__namecall
 setreadonly(hojixz, false)
@@ -917,6 +837,9 @@ LocalPlayer.CharacterAdded:Connect(function(character)
             TargetKeybind = false
             stopAimbot()
             stopStrafing()
+            if KYO.Both.Notifications then
+                Notify("You Died, Targeting Disabled")
+            end
         end
     end)
 end)
