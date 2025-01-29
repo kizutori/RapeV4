@@ -6,7 +6,7 @@ KYO = {
         ["Keybind"] = "c",
 
         ["UseShake"] = false,
-        ["ShakeMultiplyer"] = 1,
+        ["ShakeMultiplier"] = 1,
         ["ShakeValue"] = 40,
 
         ["UseSmoothing"] = false,
@@ -23,7 +23,7 @@ KYO = {
         FieldOfView = {
             ["Visible"] = false,
             ["Filled"] = false,
-            ["Color"] = Color3.fromRGB(255,255,144),
+            ["Color"] = Color3.fromRGB(255, 255, 144),
             ["Transparency"] = 1,
             ["Radius"] = 30,
             ["Angle"] = 90, -- Field of view angle in degrees
@@ -57,7 +57,7 @@ KYO = {
 
         Drawings = {
             ["Tracer"] = false,
-            ["Color"] = Color3.fromRGB(255,255,255),
+            ["Color"] = Color3.fromRGB(255, 255, 255),
             ["Thickness"] = 1,
             ["Transparency"] = 1,
         },
@@ -367,8 +367,8 @@ Camlock:slider({name = "Shake Value", def = 40, max = 100, min = 1, rounding = f
     KYO.Cam.ShakeValue = Value
 end})
 
-Camlock:slider({name = "Shake Multiplyer", def = 1, max = 10, min = 1, rounding = false, callback = function(Value)
-    KYO.Cam.ShakeMultiplyer = Value
+Camlock:slider({name = "Shake Multiplier", def = 1, max = 10, min = 1, rounding = false, callback = function(Value)
+    KYO.Cam.ShakeMultiplier = Value
 end})
 
 Camlock:slider({name = "Resolver Tune", def = 0.13, max = 0.2, min = 0.1, rounding = false, callback = function(Value)
@@ -462,16 +462,34 @@ task.spawn(function()
         if CamKeybind then
             if MrChosenOne and MrChosenOne.Parent then
                 local Opp = MrChosenOne.Character[KYO.Cam.Part].Position + MrChosenOne.Character[KYO.Cam.Part].Velocity * KYO.Cam.Prediction
-                local Mop = MrChosenOne.Character.Humanoid.MoveDirection
                 
-                if KYO.Cam.Resolver then
-                    Mop = Mop * 16
-                    Opp = MrChosenOne.Character[KYO.Cam.Part].Position + Mop * KYO.Cam.ResolverTune
+                if KYO.Cam.UseSmoothing then
+                    local TweenService = game:GetService("TweenService")
+                    local tweenInfo = TweenInfo.new(
+                        KYO.Cam.SmoothingAmount,
+                        KYO.Cam.EasingStyle,
+                        KYO.Cam.EasingDirection
+                    )
+                    local tween = TweenService:Create(Camera, tweenInfo, {CFrame = CFrame.new(Camera.CFrame.p, Opp)})
+                    tween:Play()
+                else
+                    Camera.CFrame = CFrame.new(Camera.CFrame.p, Opp)
                 end
-                Camera.CFrame = CFrame.new(Camera.CFrame.p, Opp)
+                
+                if KYO.Cam.UseShake then
+                    local shakeAmount = math.random(-KYO.Cam.ShakeValue, KYO.Cam.ShakeValue) * KYO.Cam.ShakeMultiplier
+                    Camera.CFrame = Camera.CFrame * CFrame.Angles(0, math.rad(shakeAmount), 0)
+                end
             end
         end
     end
+end)
+
+-- Aim assist FOV handling
+game:GetService("RunService").Heartbeat:Connect(function()
+    CamCircleFOV.Position = Vector2.new(Mouse.X, Mouse.Y + 35)
+    CamCircleFOV.Radius = KYO.Cam.FieldOfView.Radius * 3
+    CamCircleFOV.Visible = KYO.Cam.FieldOfView.Visible
 end)
 
 Mouse.KeyDown:Connect(function(ChosenKey)
