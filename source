@@ -43,15 +43,15 @@ KYO = {
         ["Keybind"] = "c",
         ["Prediction"] = 0.138,
         ["Part"] = "HumanoidRootPart",
-        ["UsePrediction"] = false,
+        ["UsePrediction"] = true,
 
         ["Resolver"] = false,
         ["ResolverTune"] = 0.138,
 
         ["StrafeEnabled"] = false,
         ["StrafeRadius"] = 10,
-        ["StrafeSpeed"] = 10,
-        ["StrafeHeight"] = 4,
+        ["StrafeSpeed"] = 5,
+        ["StrafeHeight"] = 0,
 
         ["Notify"] = false,
 
@@ -85,11 +85,11 @@ local Camera = Workspace.CurrentCamera
 
 local Mouse = LocalPlayer:GetMouse()
 
-local hojixvChosenPlayer
-local angle = 0 
-local hojixvz
+local CamKeybind = false
+local TargetKeybind = false
+local MacroKeybind = false
 local MrChosenOne
-local CamLocking
+local angle = 0
 
 local CamCircleFOV = Drawing.new("Circle")
 CamCircleFOV.Color = KYO.Cam.FieldOfView.Color
@@ -129,7 +129,7 @@ local Macro = Legit:section({name = "Macro", side = "right", size = 250})
 
 local Rage = Window:page({name = "Rage"})
 local AimbotSection = Rage:section({name = "Aimbot", side = "left", size = 300})
-local StrafeSection = Rage:section({name = "Strafe", side = "right", size = 200})
+local OrbitSection = Rage:section({name = "Orbit", side = "right", size = 200})
 local CFrameSection = Rage:section({name = "CFrame", side = "left", size = 80})
 local ESPSection = Rage:section({name = "ESP", side = "right", size = 130})
 
@@ -314,7 +314,7 @@ AimbotSection:slider({name = "FOV Radius", def = 30, max = 250, min = 1, roundin
     TargetCircleFOV.Radius = Value * 3
 end})
 
-StrafeSection:toggle({name = "Toggle Strafe", def = false, callback = function(Boolean)
+OrbitSection:toggle({name = "Toggle Orbit", def = false, callback = function(Boolean)
     KYO.Target.StrafeEnabled = Boolean
     if KYO.Target.Enabled and Boolean then
         startStrafing()
@@ -323,24 +323,20 @@ StrafeSection:toggle({name = "Toggle Strafe", def = false, callback = function(B
     end
 end})
 
-StrafeSection:toggle({name = "Look At", def = false, callback = function(Boolean)
+OrbitSection:toggle({name = "Look At", def = false, callback = function(Boolean)
     KYO.Target.LookAt = Boolean
 end})
 
-StrafeSection:toggle({name = "Spectate", def = false, callback = function(Boolean)
+OrbitSection:toggle({name = "Spectate", def = false, callback = function(Boolean)
     KYO.Target.Spectate = Boolean
 end})
 
-StrafeSection:slider({name = "Radius", def = 5, max = 20, min = 1, rounding = false, callback = function(Value)
+OrbitSection:slider({name = "Radius", def = 5, max = 20, min = 1, rounding = false, callback = function(Value)
     KYO.Target.StrafeRadius = Value
 end})
 
-StrafeSection:slider({name = "Speed", def = 10, max = 100, min = 1, rounding = false, callback = function(Value)
+OrbitSection:slider({name = "Speed", def = 5, max = 5, min = 0.1, rounding = false, callback = function(Value)
     KYO.Target.StrafeSpeed = Value
-end})
-
-StrafeSection:slider({name = "Height", def = 0, max = 20, min = -5, rounding = false, callback = function(Value)
-    KYO.Target.StrafeHeight = Value
 end})
 
 Camlock:toggle({name = "Enabled", def = false, callback = function(Boolean)
@@ -443,10 +439,6 @@ function Notify(Text)
     })
 end
 
-CamKeybind = false
-TargetKeybind = false
-MacroKeybind = false
-
 Mouse.KeyDown:Connect(function(ChosenKey)
     if ChosenKey == KYO.Cam.Keybind and KYO.Cam.Enabled then
         if CamKeybind == false then
@@ -459,6 +451,24 @@ Mouse.KeyDown:Connect(function(ChosenKey)
             CamKeybind = false
             if KYO.Both.Notifications then
                 Notify("No Longer Locked On")
+            end
+        end
+    end
+end)
+
+task.spawn(function()
+    while true do
+        task.wait()
+        if CamKeybind then
+            if MrChosenOne and MrChosenOne.Parent then
+                local Opp = MrChosenOne.Character[KYO.Cam.Part].Position + MrChosenOne.Character[KYO.Cam.Part].Velocity * KYO.Cam.Prediction
+                local Mop = MrChosenOne.Character.Humanoid.MoveDirection
+                
+                if KYO.Cam.Resolver then
+                    Mop = Mop * 16
+                    Opp = MrChosenOne.Character[KYO.Cam.Part].Position + Mop * KYO.Cam.ResolverTune
+                end
+                Camera.CFrame = CFrame.new(Camera.CFrame.p, Opp)
             end
         end
     end
@@ -503,8 +513,8 @@ function startMacro()
     if game.PlaceId == 2788229376 then
         if getgenv().L_15 == true then
             game.StarterGui:SetCore("SendNotification", {
-                Title = "Speed Glitch";
-                Text = "Already Executed";
+                Title = "Speed Glitch",
+                Text = "Already Executed",
             })
             return
         end
@@ -534,8 +544,8 @@ function startMacro()
                     if not AutoMacroToggle then
                         if Notification == true then
                             game.StarterGui:SetCore("SendNotification", {
-                                Title = "AutoMacro";
-                                Text = "Activated";
+                                Title = "AutoMacro",
+                                Text = "Activated",
                             })
                         end
                         AutoMacroToggle = true
@@ -604,8 +614,8 @@ function startMacro()
                     else
                         if Notification == true then
                             game.StarterGui:SetCore("SendNotification", {
-                                Title = "AutoMacro";
-                                Text = "Deactivated";
+                                Title = "AutoMacro",
+                                Text = "Deactivated",
                             })
                         end
                         AutoMacroToggle = false
@@ -626,8 +636,8 @@ function stopMacro()
     MacroKeybind = false
     if Notification == true then
         game.StarterGui:SetCore("SendNotification", {
-            Title = "Macro";
-            Text = "Deactivated";
+            Title = "Macro",
+            Text = "Deactivated",
         })
     end
 end
@@ -681,7 +691,8 @@ function startAimbot()
     aimbotConnection = RunService.RenderStepped:Connect(function()
         if hojixvChosenPlayer and hojixvChosenPlayer.Character and hojixvChosenPlayer.Character:FindFirstChild(KYO.Target.Part) then
             local targetPart = hojixvChosenPlayer.Character[KYO.Target.Part]
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPart.Position)
+            local aimPosition = targetPart.Position + (targetPart.Velocity * KYO.Target.Prediction)
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, aimPosition)
         end
     end)
 end
