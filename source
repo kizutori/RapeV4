@@ -6,8 +6,7 @@ KYO = {
         ["Keybind"] = "c",
 
         ["UseShake"] = false,
-        ["ShakeMultiplier"] = 1,
-        ["ShakeValue"] = 40,
+        ["ShakeValue"] = 10,
 
         ["UseSmoothing"] = false,
         ["SmoothingAmount"] = 0.02,
@@ -91,6 +90,7 @@ local TargetKeybind = false
 local MacroKeybind = false
 local MrChosenOne
 local angle = 0
+local previousPrediction = KYO.Target.Prediction
 
 local CamCircleFOV = Drawing.new("Circle")
 CamCircleFOV.Color = KYO.Cam.FieldOfView.Color
@@ -125,8 +125,8 @@ local Window = library:new({name = "KYO", accent = Color3.fromRGB(175, 252, 149)
 local Legit = Window:page({name = "Legit"})
 
 local Camlock = Legit:section({name = "Aim Assist", side = "left", size = 445})
-local Checks = Legit:section({name = "Checks", side = "right", size = 103})
-local Macro = Legit:section({name = "Macro", side = "right", size = 250})
+local Checks = Legit:section({name = "Checks", side = "right", size = 140})  -- Adjusted size to fit KO Check
+local Macro = Legit:section({name = "Macro", side = "right", size = 150})  -- Adjusted size to fit content
 
 local Rage = Window:page({name = "Rage"})
 local AimbotSection = Rage:section({name = "Aimbot", side = "left", size = 300})
@@ -210,6 +210,17 @@ Players.PlayerAdded:Connect(function(player)
     end
     if espNametagEnabled then
         applyNametag(player)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    if playerHighlights[player] then
+        playerHighlights[player]:Destroy()
+        playerHighlights[player] = nil
+    end
+    if playerNametags[player] then
+        playerNametags[player]:Destroy()
+        playerNametags[player] = nil
     end
 end)
 
@@ -299,13 +310,17 @@ end})
 AimbotSection:toggle({name = "Prediction", def = false, callback = function(Boolean)
     KYO.Target.UsePrediction = Boolean
     if not Boolean then
+        previousPrediction = KYO.Target.Prediction
         KYO.Target.Prediction = 0
+    else
+        KYO.Target.Prediction = previousPrediction
     end
 end})
 
 AimbotSection:slider({name = "Prediction", def = 0.3, max = 0.4, min = 0.01, rounding = false, callback = function(Value)
     if KYO.Target.UsePrediction then
         KYO.Target.Prediction = Value
+        previousPrediction = Value
     end
 end})
 
@@ -367,12 +382,8 @@ Camlock:slider({name = "Smoothing Amount", def = 0.02, max = 1, min = 0.001, rou
     KYO.Cam.SmoothingAmount = Value
 end})
 
-Camlock:slider({name = "Shake Value", def = 40, max = 100, min = 1, rounding = false, callback = function(Value)
+Camlock:slider({name = "Shake Value", def = 10, max = 10, min = 1, rounding = false, callback = function(Value)
     KYO.Cam.ShakeValue = Value
-end})
-
-Camlock:slider({name = "Shake Multiplier", def = 1, max = 10, min = 1, rounding = false, callback = function(Value)
-    KYO.Cam.ShakeMultiplier = Value
 end})
 
 Camlock:slider({name = "Resolver Tune", def = 0.13, max = 0.2, min = 0.1, rounding = false, callback = function(Value)
@@ -426,6 +437,7 @@ end})
 
 local Settings = Window:page({name = "Settings"})
 local ConfigSection = Settings:section({name = "Config", side = "left", size = 250})
+local UIKeybindSection = Settings:section({name = "UI Keybind", side = "right", size = 100})  -- Added UI Keybind section
 local ConfigLoader = ConfigSection:configloader({folder = "Example"})
 
 -- Toggle UI Key
@@ -485,21 +497,14 @@ task.spawn(function()
                 end
                 
                 if KYO.Cam.UseShake then
-                    local shakeX = math.random(-KYO.Cam.ShakeValue, KYO.Cam.ShakeValue) * KYO.Cam.ShakeMultiplier
-                    local shakeY = math.random(-KYO.Cam.ShakeValue, KYO.Cam.ShakeValue) * KYO.Cam.ShakeMultiplier
-                    local shakeZ = math.random(-KYO.Cam.ShakeValue, KYO.Cam.ShakeValue) * KYO.Cam.ShakeMultiplier
+                    local shakeX = math.random(-KYO.Cam.ShakeValue, KYO.Cam.ShakeValue)
+                    local shakeY = math.random(-KYO.Cam.ShakeValue, KYO.Cam.ShakeValue)
+                    local shakeZ = math.random(-KYO.Cam.ShakeValue, KYO.Cam.ShakeValue)
                     Camera.CFrame = Camera.CFrame * CFrame.Angles(math.rad(shakeX), math.rad(shakeY), math.rad(shakeZ))
                 end
             end
         end
     end
-end)
-
--- Aim assist FOV handling
-game:GetService("RunService").Heartbeat:Connect(function()
-    CamCircleFOV.Position = Vector2.new(Mouse.X, Mouse.Y + 35)
-    CamCircleFOV.Radius = KYO.Cam.FieldOfView.Radius * 3
-    CamCircleFOV.Visible = KYO.Cam.FieldOfView.Visible
 end)
 
 Mouse.KeyDown:Connect(function(ChosenKey)
